@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdio.h>
 #include "myutility.h"
 #include "myhashmap.h"
 
@@ -189,8 +191,13 @@ void print_words(){
                 }
             }
 
-            printf("%s %zu", node->word, node->count);
+            char * buffer = malloc(strlen(node->word)+20);
+
+            sprintf(buffer, "%s %zu\n", node->word, node->count);
+
+            write(STDOUT_FILENO, buffer, strlen(buffer));
             remove_word(node);
+            free(buffer);
         }
         else //no more word nodes, end printing
         {
