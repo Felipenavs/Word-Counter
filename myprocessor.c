@@ -1,7 +1,10 @@
 #include <fcntl.h>    
 #include <unistd.h> 
 #include <stdio.h>
+#include <dirent.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "myutility.h"
 #include "myhashmap.h"
 
@@ -23,6 +26,12 @@ static void increase_sbuff_size(char ** sub_buffer, int * current_sbuff_size){
         exit(EXIT_FAILURE);
     }
     *sub_buffer = temp;
+}
+
+//helper function to determine if a file ends in '.txt' 
+static int ends_with_txt(const char *filename) {
+    const char *dot = strrchr(filename, '.'); // find last dot
+    return dot && strcmp(dot, ".txt") == 0;
 }
 
 
@@ -48,8 +57,7 @@ void process_file(const char * file_path){
         exit(EXIT_FAILURE);
     }
 
-    
-
+    //runs until EOF 
     while ((bytes = read(fd, buffer, BUFFSIZE)) > 0)
     {
         
@@ -105,7 +113,7 @@ void process_file(const char * file_path){
 
         
     }
-    
+
     if(bytes < 0)
     {
         free(sub_buffer);
@@ -116,6 +124,7 @@ void process_file(const char * file_path){
     //EOF
     if(word_size > 0)
     {
+        //makes sure word doesnt end with a dash
         if(is_dash(sub_buffer[word_size-1]))
         {
             sub_buffer[word_size-1] = '\0';
@@ -135,4 +144,74 @@ void process_file(const char * file_path){
 
     free(sub_buffer);
     close(fd);
+}
+
+//process directories and sub-directories recursively. 
+//Skip entries that start with a '.' ej: parent dir, own dir and hidden files. 
+//Also skips any file that doesnt end with ".txt"
+void process_directory(const char * dir_path){
+
+    DIR * dir = opendir(dir_path);
+    if(!dir)
+    {
+        perror(dir_path);
+        return;
+    }
+
+    size_t buff_size = 1024;
+    char * path = malloc(buff_size);
+    if(!path)
+    {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+
+    struct dirent * de = NULL;
+    struct stat sb;
+
+    while((de = readdir(dir)) != NULL)
+    {
+        //skips parent dir, own dir, and hidden files
+        if(de->d_name[0] == '.'){   
+            continue;
+        }
+
+        //makes sure buffer is big enough for the path name to be constructed
+        if((strlen(dir_path) + strlen(de->d_name)+2) >= buff_size){
+            free(path);
+            buff_size = (strlen(dir_path) + strlen(de->d_name))+100;
+            path = malloc(buff_size);
+            if(!path)
+            {
+                perror("malloc");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        sprintf(path,"%s/%s", dir_path, de->d_name);
+
+        int st = stat(path, &sb);
+        if(st !=0)
+        {
+            perror(path);
+            continue;
+        }
+
+        //if it is a regular file that end in .txt it process the file
+        if(S_ISREG(sb.st_mode)){
+
+            if(ends_with_txt(de->d_name))
+            {
+                process_file(path);
+            }
+
+        }//if it is a directory, makes a recursive call to process it
+        else if(S_ISDIR(sb.st_mode))
+        {
+            process_directory(path);
+        }
+    }
+
+    free(path);
+    closedir(dir);
 }
