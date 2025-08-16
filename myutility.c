@@ -12,11 +12,11 @@ int is_uppercase(char a) {
 }
 
 int is_apostrophe(char a) {
-    return (a == "'");
+    return (a == '\'');
 }
 
 int is_dash(char a) {
-    return (a == "-");
+    return (a == '-');
 }
 
 int is_valid_char(char a){

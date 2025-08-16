@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string.h>
 #include "myutility.h"
 #include "myhashmap.h"
 
@@ -60,7 +61,6 @@ void process_file(const char * file_path){
     //runs until EOF 
     while ((bytes = read(fd, buffer, BUFFSIZE)) > 0)
     {
-        
         for(int i=0; i<bytes; i++)
         {
 
@@ -93,6 +93,14 @@ void process_file(const char * file_path){
 
             if((word_size>0) && (!is_valid_char(character)))
             {
+                if(is_dash(sub_buffer[word_size-1]))
+                {
+                    sub_buffer[word_size-1] = '\0';
+                    word_size =0;
+                    add_word(sub_buffer);
+                    continue;
+                }
+                
                 if(word_size == sub_buffer_size)
                 {
                     increase_sbuff_size(&sub_buffer, &sub_buffer_size);

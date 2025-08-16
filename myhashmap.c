@@ -164,14 +164,13 @@ void add_word(const char * word){
 void print_words(){
 
     int flag =1;
-
     while(flag)
     {
 
         Word_Node * node = NULL;
-        int i = 0;
+        int i = ARRAY_SIZE - 1;
 
-        for(i; i<ARRAY_SIZE;i++)
+        for(; i >=0;i--)
         {
             if(myhashmap[i])
             {
@@ -183,12 +182,16 @@ void print_words(){
     
         if(node)
         {
-            for ( i; i < ARRAY_SIZE; i++)
+            for (; i >=0;i--)
             {
-                if(myhashmap[i]->count > node->count)
+                if(myhashmap[i])
                 {
-                    node = myhashmap[i];
+                    if(myhashmap[i]->count > node->count)
+                    {
+                        node = myhashmap[i];
+                    }
                 }
+                
             }
 
             char * buffer = malloc(strlen(node->word)+20);
